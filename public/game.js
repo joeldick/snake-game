@@ -42,6 +42,10 @@ let food = {
     y: 0
 };
 
+// Touch tracking for swipe detection
+let touchStartX = 0;
+let touchStartY = 0;
+
 // Initialize game when page loads
 document.addEventListener('DOMContentLoaded', function() {
     canvas = document.getElementById('gameCanvas');
@@ -49,6 +53,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set up event listeners
     document.addEventListener('keydown', handleKeyPress);
+    
+    // Set up touch event listeners for mobile swipe support
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
     
     // Initialize game
     initGame();
@@ -251,6 +259,50 @@ function handleKeyPress(event) {
         }
     } else if (gameState === GAME_STATES.GAME_OVER) {
         if (event.key.toLowerCase() === 'r') {
+            restartGame();
+        }
+    }
+}
+
+function handleTouchStart(event) {
+    event.preventDefault();
+    const touch = event.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+}
+
+function handleTouchEnd(event) {
+    event.preventDefault();
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+    const minSwipeDistance = 20;
+    const isTap = Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance;
+
+    if (gameState === GAME_STATES.PLAYING) {
+        if (!isTap) {
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Horizontal swipe
+                if (deltaX > 0 && snake.direction.x !== -1) {
+                    snake.nextDirection = { x: 1, y: 0 };
+                } else if (deltaX < 0 && snake.direction.x !== 1) {
+                    snake.nextDirection = { x: -1, y: 0 };
+                }
+            } else {
+                // Vertical swipe
+                if (deltaY > 0 && snake.direction.y !== -1) {
+                    snake.nextDirection = { x: 0, y: 1 };
+                } else if (deltaY < 0 && snake.direction.y !== 1) {
+                    snake.nextDirection = { x: 0, y: -1 };
+                }
+            }
+        }
+    } else if (gameState === GAME_STATES.PAUSED) {
+        if (isTap) {
+            resumeGame();
+        }
+    } else if (gameState === GAME_STATES.GAME_OVER) {
+        if (isTap) {
             restartGame();
         }
     }
