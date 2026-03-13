@@ -1,6 +1,8 @@
 # Snake Game
 
-A classic Snake game implementation using Python and Pygame.
+A classic Snake game available in two versions:
+- **Web Version**: HTML5 Canvas + JavaScript (recommended for easy sharing)
+- **Desktop Version**: Python + Pygame
 
 ## Features
 
@@ -9,19 +11,36 @@ A classic Snake game implementation using Python and Pygame.
 - Collision detection with walls and self
 - Pause functionality (Space bar)
 - Game over screen with restart option
+- Responsive design (web version)
 - Clean, modular code structure
 
-## Installation
+## Web Version (Recommended)
 
+### Quick Start
+1. Run the local server:
+   ```bash
+   python server.py
+   ```
+2. Open http://localhost:8000 in your browser
+3. Start playing!
+
+### Features
+- No installation required (just open in browser)
+- Responsive design works on desktop and mobile
+- Beautiful modern UI with gradients and animations
+- Smooth gameplay at 60fps
+- Easy to deploy to any web hosting service
+
+## Desktop Version (Python)
+
+### Installation
 1. Make sure you have Python 3.7 or higher installed
 2. Install the required dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-## How to Run
-
-Run the game with:
+### How to Run
 ```bash
 python main.py
 ```
@@ -45,14 +64,38 @@ python main.py
 
 ```
 snake-game/
-├── main.py          # Main entry point and game loop
-├── game.py          # Game class with game logic and state management
-├── snake.py         # Snake class for player object
-├── food.py          # Food class for collectible items
-├── config.py        # Configuration constants and settings
+├── index.html       # Web version - main HTML file
+├── game.js          # Web version - game logic and rendering
+├── server.py        # Local development server
+├── package.json     # Project metadata and scripts
+├── main.py          # Desktop version - main entry point
+├── game.py          # Desktop version - game class
+├── snake.py         # Desktop version - snake class
+├── food.py          # Desktop version - food class
+├── config.py        # Desktop version - configuration
 ├── requirements.txt # Python dependencies
+├── .gitignore       # Git ignore rules
 └── README.md        # This file
 ```
+
+## Deployment Options
+
+### Web Deployment (Easy)
+The web version can be deployed to any static hosting service:
+- GitHub Pages
+- Netlify
+- Vercel
+- Surge.sh
+- Firebase Hosting
+
+Simply upload the `index.html`, `game.js`, and any assets.
+
+### Desktop Distribution
+The Python version can be packaged using:
+- PyInstaller
+- cx_Freeze
+- py2exe (Windows)
+- py2app (macOS)
 
 ## Customization
 

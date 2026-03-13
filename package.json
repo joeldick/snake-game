@@ -1,0 +1,29 @@
+{
+  "name": "snake-game",
+  "version": "1.0.0",
+  "description": "A classic Snake game implementation for the browser using HTML5 Canvas and JavaScript",
+  "main": "index.html",
+  "scripts": {
+    "start": "python server.py",
+    "serve": "python server.py",
+    "dev": "python server.py"
+  },
+  "keywords": [
+    "snake",
+    "game",
+    "html5",
+    "canvas",
+    "javascript",
+    "browser-game"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joeldick/snake-game.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joeldick/snake-game/issues"
+  },
+  "homepage": "https://github.com/joeldick/snake-game#readme"
+}
