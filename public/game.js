@@ -5,6 +5,9 @@ const CONFIG = {
     GRID_SIZE: 20,
     INITIAL_SNAKE_LENGTH: 3,
     GAME_SPEED: 150, // milliseconds between moves
+    // Boost settings (tap/click to speed up when tapping the current direction)
+    BOOST_MULTIPLIER: 0.5, // multiply GAME_SPEED by this when boosting (smaller -> faster)
+    BOOST_DURATION: 300, // milliseconds the boost lasts
     
     // Colors
     COLORS: {
@@ -27,7 +30,9 @@ const GAME_STATES = {
 let canvas, ctx;
 let gameState = GAME_STATES.PLAYING;
 let score = 0;
-let gameLoop;
+let gameLoopTimeout = null;
+let currentSpeed = CONFIG.GAME_SPEED;
+let boostTimer = null;
 
 // Snake object
 let snake = {
@@ -85,16 +90,49 @@ function initGame() {
 }
 
 function startGameLoop() {
-    if (gameLoop) {
-        clearInterval(gameLoop);
+    if (gameLoopTimeout) {
+        clearTimeout(gameLoopTimeout);
+        gameLoopTimeout = null;
     }
-    
-    gameLoop = setInterval(function() {
+
+    function tick() {
         if (gameState === GAME_STATES.PLAYING) {
             updateGame();
             drawGame();
         }
-    }, CONFIG.GAME_SPEED);
+        gameLoopTimeout = setTimeout(tick, currentSpeed);
+    }
+
+    gameLoopTimeout = setTimeout(tick, currentSpeed);
+}
+
+function stopGameLoop() {
+    if (gameLoopTimeout) {
+        clearTimeout(gameLoopTimeout);
+        gameLoopTimeout = null;
+    }
+}
+
+function setBoost() {
+    currentSpeed = Math.max(30, Math.floor(CONFIG.GAME_SPEED * CONFIG.BOOST_MULTIPLIER));
+    if (gameLoopTimeout) {
+        clearTimeout(gameLoopTimeout);
+        gameLoopTimeout = null;
+    }
+    startGameLoop();
+
+    if (boostTimer) {
+        clearTimeout(boostTimer);
+    }
+    boostTimer = setTimeout(() => {
+        currentSpeed = CONFIG.GAME_SPEED;
+        if (gameLoopTimeout) {
+            clearTimeout(gameLoopTimeout);
+            gameLoopTimeout = null;
+        }
+        startGameLoop();
+        boostTimer = null;
+    }, CONFIG.BOOST_DURATION);
 }
 
 function updateGame() {
@@ -219,34 +257,37 @@ function handleKeyPress(event) {
     }
     
     if (gameState === GAME_STATES.PLAYING) {
+        let desired = null;
         switch (event.key.toLowerCase()) {
             case 'arrowup':
             case 'w':
-                if (snake.direction.y !== 1) {
-                    snake.nextDirection = { x: 0, y: -1 };
-                }
+                desired = { x: 0, y: -1 };
                 break;
             case 'arrowdown':
             case 's':
-                if (snake.direction.y !== -1) {
-                    snake.nextDirection = { x: 0, y: 1 };
-                }
+                desired = { x: 0, y: 1 };
                 break;
             case 'arrowleft':
             case 'a':
-                if (snake.direction.x !== 1) {
-                    snake.nextDirection = { x: -1, y: 0 };
-                }
+                desired = { x: -1, y: 0 };
                 break;
             case 'arrowright':
             case 'd':
-                if (snake.direction.x !== -1) {
-                    snake.nextDirection = { x: 1, y: 0 };
-                }
+                desired = { x: 1, y: 0 };
                 break;
             case ' ':
                 pauseGame();
                 break;
+        }
+
+        if (desired) {
+            if (!(desired.x === -snake.direction.x && desired.y === -snake.direction.y)) {
+                if (desired.x === snake.direction.x && desired.y === snake.direction.y) {
+                    setBoost();
+                } else {
+                    snake.nextDirection = desired;
+                }
+            }
         }
     } else if (gameState === GAME_STATES.PAUSED) {
         if (event.key === ' ') {
@@ -278,19 +319,26 @@ function handleTouchStart(event) {
         const diffY = tapGridY - head.y;
 
         // Determine direction based on which axis the tap is farther from the head
+        let desired = null;
         if (Math.abs(diffX) > Math.abs(diffY)) {
             // East or West
-            if (diffX > 0 && snake.direction.x !== -1) {
-                snake.nextDirection = { x: 1, y: 0 };
-            } else if (diffX < 0 && snake.direction.x !== 1) {
-                snake.nextDirection = { x: -1, y: 0 };
-            }
+            if (diffX > 0) desired = { x: 1, y: 0 };
+            else if (diffX < 0) desired = { x: -1, y: 0 };
         } else {
             // North or South
-            if (diffY > 0 && snake.direction.y !== -1) {
-                snake.nextDirection = { x: 0, y: 1 };
-            } else if (diffY < 0 && snake.direction.y !== 1) {
-                snake.nextDirection = { x: 0, y: -1 };
+            if (diffY > 0) desired = { x: 0, y: 1 };
+            else if (diffY < 0) desired = { x: 0, y: -1 };
+        }
+
+        if (desired) {
+            // Prevent reversing
+            if (!(desired.x === -snake.direction.x && desired.y === -snake.direction.y)) {
+                // If tapping in the current direction, trigger boost
+                if (desired.x === snake.direction.x && desired.y === snake.direction.y) {
+                    setBoost();
+                } else {
+                    snake.nextDirection = desired;
+                }
             }
         }
     } else if (gameState === GAME_STATES.PAUSED) {

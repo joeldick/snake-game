@@ -5,6 +5,9 @@ const CONFIG = {
     GRID_SIZE: 20,
     INITIAL_SNAKE_LENGTH: 3,
     GAME_SPEED: 150, // milliseconds between moves
+    // Boost settings (tap/click to speed up when tapping the current direction)
+    BOOST_MULTIPLIER: 0.5, // multiply GAME_SPEED by this when boosting (smaller -> faster)
+    BOOST_DURATION: 300, // milliseconds the boost lasts
     
     // Colors
     COLORS: {
@@ -27,7 +30,9 @@ const GAME_STATES = {
 let canvas, ctx;
 let gameState = GAME_STATES.PLAYING;
 let score = 0;
-let gameLoop;
+let gameLoopTimeout = null;
+let currentSpeed = CONFIG.GAME_SPEED;
+let boostTimer = null;
 
 // Snake object
 let snake = {
@@ -84,16 +89,59 @@ function initGame() {
 }
 
 function startGameLoop() {
-    if (gameLoop) {
-        clearInterval(gameLoop);
+    // Clear any existing timeout
+    if (gameLoopTimeout) {
+        clearTimeout(gameLoopTimeout);
+        gameLoopTimeout = null;
     }
-    
-    gameLoop = setInterval(function() {
+
+    // Use a self-adjusting timeout so we can change `currentSpeed` on the fly
+    function tick() {
         if (gameState === GAME_STATES.PLAYING) {
             updateGame();
             drawGame();
         }
-    }, CONFIG.GAME_SPEED);
+        gameLoopTimeout = setTimeout(tick, currentSpeed);
+    }
+
+    // Start the loop
+    gameLoopTimeout = setTimeout(tick, currentSpeed);
+}
+
+function stopGameLoop() {
+    if (gameLoopTimeout) {
+        clearTimeout(gameLoopTimeout);
+        gameLoopTimeout = null;
+    }
+}
+
+function setBoost() {
+    // Apply boost: lower the interval (faster)
+    currentSpeed = Math.max(30, Math.floor(CONFIG.GAME_SPEED * CONFIG.BOOST_MULTIPLIER));
+
+    // Restart the loop so the new interval takes effect immediately
+    if (gameLoopTimeout) {
+        clearTimeout(gameLoopTimeout);
+        gameLoopTimeout = null;
+    }
+    startGameLoop();
+
+    // Clear previous boost timer
+    if (boostTimer) {
+        clearTimeout(boostTimer);
+    }
+
+    // Schedule restoring speed
+    boostTimer = setTimeout(() => {
+        currentSpeed = CONFIG.GAME_SPEED;
+        // Restart loop to apply restored speed
+        if (gameLoopTimeout) {
+            clearTimeout(gameLoopTimeout);
+            gameLoopTimeout = null;
+        }
+        startGameLoop();
+        boostTimer = null;
+    }, CONFIG.BOOST_DURATION);
 }
 
 function updateGame() {
@@ -218,34 +266,39 @@ function handleKeyPress(event) {
     }
     
     if (gameState === GAME_STATES.PLAYING) {
+        let desired = null;
         switch (event.key.toLowerCase()) {
             case 'arrowup':
             case 'w':
-                if (snake.direction.y !== 1) {
-                    snake.nextDirection = { x: 0, y: -1 };
-                }
+                desired = { x: 0, y: -1 };
                 break;
             case 'arrowdown':
             case 's':
-                if (snake.direction.y !== -1) {
-                    snake.nextDirection = { x: 0, y: 1 };
-                }
+                desired = { x: 0, y: 1 };
                 break;
             case 'arrowleft':
             case 'a':
-                if (snake.direction.x !== 1) {
-                    snake.nextDirection = { x: -1, y: 0 };
-                }
+                desired = { x: -1, y: 0 };
                 break;
             case 'arrowright':
             case 'd':
-                if (snake.direction.x !== -1) {
-                    snake.nextDirection = { x: 1, y: 0 };
-                }
+                desired = { x: 1, y: 0 };
                 break;
             case ' ':
                 pauseGame();
                 break;
+        }
+
+        if (desired) {
+            // Prevent reversing
+            if (!(desired.x === -snake.direction.x && desired.y === -snake.direction.y)) {
+                // If the desired direction is the same as the current direction, trigger a boost
+                if (desired.x === snake.direction.x && desired.y === snake.direction.y) {
+                    setBoost();
+                } else {
+                    snake.nextDirection = desired;
+                }
+            }
         }
     } else if (gameState === GAME_STATES.PAUSED) {
         if (event.key === ' ') {
