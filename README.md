@@ -16,13 +16,27 @@ A classic Snake game available in two versions:
 
 ## Web Version (Recommended)
 
-### Quick Start
-1. Run the local server:
+### Quick Start (Web)
+
+1. Install Node dependencies:
    ```bash
-   python server.py
+   npm install
    ```
-2. Open http://localhost:8000 in your browser
-3. Start playing!
+2. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+   Open the printed local URL (usually http://localhost:5173) and start playing.
+
+3. Build for production:
+   ```bash
+   npm run build
+   ```
+
+4. Preview the production build locally:
+   ```bash
+   npm run preview
+   ```
 
 ### Features
 - No installation required (just open in browser)
@@ -33,17 +47,7 @@ A classic Snake game available in two versions:
 
 ## Desktop Version (Python)
 
-### Installation
-1. Make sure you have Python 3.7 or higher installed
-2. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### How to Run
-```bash
-python main.py
-```
+The desktop (Python/Pygame) version was removed when the project migrated to the JavaScript/web version. If you need the Python variant back, we can restore it from Git history or re-add it on request.
 
 ## Controls
 
@@ -66,14 +70,9 @@ python main.py
 snake-game/
 ├── index.html       # Web version - main HTML file
 ├── game.js          # Web version - game logic and rendering
-├── server.py        # Local development server
-├── package.json     # Project metadata and scripts
-├── main.py          # Desktop version - main entry point
-├── game.py          # Desktop version - game class
-├── snake.py         # Desktop version - snake class
-├── food.py          # Desktop version - food class
-├── config.py        # Desktop version - configuration
-├── requirements.txt # Python dependencies
+├── package.json     # Project metadata and scripts (dev server, build)
+├── src/             # Canonical web source (HTML, JS)
+├── dist/            # Production build output (generated)
 ├── .gitignore       # Git ignore rules
 └── README.md        # This file
 ```
@@ -117,7 +116,7 @@ The code is organized into separate modules for easy maintenance and extension:
 - **food.py**: Handles food generation and rendering
 - **config.py**: Centralizes all game configuration constants
 
-Feel free to modify and extend the code to add new features!
+Feel free to modify and extend the web version. If you want the Python desktop version restored, say so and I can resurrect it from git history or re-add it.
 
 ## Future Enhancements
 

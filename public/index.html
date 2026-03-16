@@ -36,6 +36,8 @@
             border: 3px solid #fff;
             border-radius: 10px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            touch-action: none; /* disable default touch gestures on canvas */
+            -webkit-tap-highlight-color: rgba(0,0,0,0); /* disable tap highlight on iOS */
         }
 
         .score {
@@ -120,8 +122,7 @@
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         <div class="controls">
             <strong>Controls:</strong><br>
-            Arrow Keys or WASD to move • Space to pause • R to restart<br>
-            <small>📱 Mobile: Tap where you want the snake to go • Tap to resume/restart</small>
+            Arrow Keys or WASD to move • Space to pause • R to restart
         </div>
     </div>
 

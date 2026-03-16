@@ -56,6 +56,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', handleKeyPress);
     // Touch / mobile support: tap to change direction relative to snake head
     canvas.addEventListener('touchstart', handleTouch, { passive: false });
+    // Support mouse clicks as touch for desktop (click relative to head)
+    canvas.addEventListener('mousedown', (e) => {
+        // Create a synthetic touch-like object
+        handleTouch({
+            preventDefault: () => e.preventDefault(),
+            touches: [{ clientX: e.clientX, clientY: e.clientY }]
+        });
+    });
     
     // Initialize game
     initGame();

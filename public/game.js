@@ -54,9 +54,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set up event listeners
     document.addEventListener('keydown', handleKeyPress);
-    
-    // Set up touch event listener for mobile tap control
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    // Touch / mobile support: tap to change direction relative to snake head
+    canvas.addEventListener('touchstart', handleTouch, { passive: false });
     
     // Initialize game
     initGame();
@@ -90,11 +89,13 @@ function initGame() {
 }
 
 function startGameLoop() {
+    // Clear any existing timeout
     if (gameLoopTimeout) {
         clearTimeout(gameLoopTimeout);
         gameLoopTimeout = null;
     }
 
+    // Use a self-adjusting timeout so we can change `currentSpeed` on the fly
     function tick() {
         if (gameState === GAME_STATES.PLAYING) {
             updateGame();
@@ -103,6 +104,7 @@ function startGameLoop() {
         gameLoopTimeout = setTimeout(tick, currentSpeed);
     }
 
+    // Start the loop
     gameLoopTimeout = setTimeout(tick, currentSpeed);
 }
 
@@ -114,18 +116,25 @@ function stopGameLoop() {
 }
 
 function setBoost() {
+    // Apply boost: lower the interval (faster)
     currentSpeed = Math.max(30, Math.floor(CONFIG.GAME_SPEED * CONFIG.BOOST_MULTIPLIER));
+
+    // Restart the loop so the new interval takes effect immediately
     if (gameLoopTimeout) {
         clearTimeout(gameLoopTimeout);
         gameLoopTimeout = null;
     }
     startGameLoop();
 
+    // Clear previous boost timer
     if (boostTimer) {
         clearTimeout(boostTimer);
     }
+
+    // Schedule restoring speed
     boostTimer = setTimeout(() => {
         currentSpeed = CONFIG.GAME_SPEED;
+        // Restart loop to apply restored speed
         if (gameLoopTimeout) {
             clearTimeout(gameLoopTimeout);
             gameLoopTimeout = null;
@@ -281,7 +290,9 @@ function handleKeyPress(event) {
         }
 
         if (desired) {
+            // Prevent reversing
             if (!(desired.x === -snake.direction.x && desired.y === -snake.direction.y)) {
+                // If the desired direction is the same as the current direction, trigger a boost
                 if (desired.x === snake.direction.x && desired.y === snake.direction.y) {
                     setBoost();
                 } else {
@@ -300,51 +311,55 @@ function handleKeyPress(event) {
     }
 }
 
-function handleTouchStart(event) {
+// Handle touch events on the canvas. A tap relative to the snake head
+// will change direction: tapping north/south/east/west of the head
+// sets the corresponding direction (prevents reversing into itself).
+function handleTouch(event) {
+    // Prevent scrolling on touch
     event.preventDefault();
+
+    if (gameState !== GAME_STATES.PLAYING) {
+        // If paused, tapping could resume
+        if (gameState === GAME_STATES.PAUSED) {
+            resumeGame();
+        }
+        return;
+    }
+
     const touch = event.touches[0];
+    if (!touch) return;
 
-    if (gameState === GAME_STATES.PLAYING) {
-        // Convert touch position to grid coordinates, accounting for canvas scaling
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = CONFIG.CANVAS_WIDTH / rect.width;
-        const scaleY = CONFIG.CANVAS_HEIGHT / rect.height;
-        const gridCols = CONFIG.CANVAS_WIDTH / CONFIG.GRID_SIZE;
-        const gridRows = CONFIG.CANVAS_HEIGHT / CONFIG.GRID_SIZE;
-        const tapGridX = Math.min(gridCols - 1, Math.max(0, Math.floor((touch.clientX - rect.left) * scaleX / CONFIG.GRID_SIZE)));
-        const tapGridY = Math.min(gridRows - 1, Math.max(0, Math.floor((touch.clientY - rect.top) * scaleY / CONFIG.GRID_SIZE)));
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
 
-        const head = snake.body[0];
-        const diffX = tapGridX - head.x;
-        const diffY = tapGridY - head.y;
+    // Convert touch coordinates to canvas pixel coordinates
+    const touchX = (touch.clientX - rect.left) * scaleX;
+    const touchY = (touch.clientY - rect.top) * scaleY;
 
-        // Determine direction based on which axis the tap is farther from the head
-        let desired = null;
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-            // East or West
-            if (diffX > 0) desired = { x: 1, y: 0 };
-            else if (diffX < 0) desired = { x: -1, y: 0 };
-        } else {
-            // North or South
-            if (diffY > 0) desired = { x: 0, y: 1 };
-            else if (diffY < 0) desired = { x: 0, y: -1 };
-        }
+    // Snake head center in pixels
+    const head = snake.body[0];
+    const headCenterX = head.x * CONFIG.GRID_SIZE + CONFIG.GRID_SIZE / 2;
+    const headCenterY = head.y * CONFIG.GRID_SIZE + CONFIG.GRID_SIZE / 2;
 
-        if (desired) {
-            // Prevent reversing
-            if (!(desired.x === -snake.direction.x && desired.y === -snake.direction.y)) {
-                // If tapping in the current direction, trigger boost
-                if (desired.x === snake.direction.x && desired.y === snake.direction.y) {
-                    setBoost();
-                } else {
-                    snake.nextDirection = desired;
-                }
-            }
-        }
-    } else if (gameState === GAME_STATES.PAUSED) {
-        resumeGame();
-    } else if (gameState === GAME_STATES.GAME_OVER) {
-        restartGame();
+    const dx = touchX - headCenterX;
+    const dy = touchY - headCenterY;
+
+    // Decide direction by largest absolute delta
+    let desired = { x: 0, y: 0 };
+    if (Math.abs(dx) > Math.abs(dy)) {
+        // Horizontal tap
+        desired.x = dx > 0 ? 1 : -1;
+        desired.y = 0;
+    } else {
+        // Vertical tap
+        desired.x = 0;
+        desired.y = dy > 0 ? 1 : -1;
+    }
+
+    // Prevent reversing: only accept if desired is not exactly opposite of current direction
+    if (!(desired.x === -snake.direction.x && desired.y === -snake.direction.y)) {
+        snake.nextDirection = desired;
     }
 }
 
