@@ -52,6 +52,30 @@ document.addEventListener('DOMContentLoaded', function() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
     
+    // Handle responsive canvas for mobile
+    function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        
+        // Set canvas resolution to match display size * device pixel ratio for crisp rendering
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        
+        // Scale context to match device pixel ratio
+        ctx.scale(dpr, dpr);
+        
+        // Redraw game at new size
+        if (gameState !== GAME_STATES.GAME_OVER) {
+            drawGame();
+        }
+    }
+    
+    // Initial resize
+    resizeCanvas();
+    
+    // Resize on window change
+    window.addEventListener('resize', resizeCanvas);
+    
     // Set up event listeners
     document.addEventListener('keydown', handleKeyPress);
     // Touch / mobile support: respond to taps anywhere on screen
@@ -399,6 +423,10 @@ function restartGame() {
 function updateScore() {
     document.getElementById('score').textContent = score;
 }
+
+// Expose functions globally so inline onclick handlers can call them (since this is a module)
+window.restartGame = restartGame;
+window.updateScore = updateScore;
 
 // Handle window resize for responsive design
 window.addEventListener('resize', function() {

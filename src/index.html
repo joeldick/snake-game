@@ -38,6 +38,9 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
             touch-action: none; /* disable default touch gestures on canvas */
             -webkit-tap-highlight-color: rgba(0,0,0,0); /* disable tap highlight on iOS */
+            display: block;
+            max-width: 100%;
+            height: auto;
         }
 
         .score {
@@ -101,7 +104,7 @@
         @media (max-width: 600px) {
             canvas {
                 width: 90vw;
-                height: 67.5vw; /* Maintain 4:3 aspect ratio */
+                height: auto;
             }
             
             .game-container {
