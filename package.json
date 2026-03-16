@@ -1,11 +1,9 @@
 {
   "name": "snake-game",
   "version": "1.0.0",
-  "description": "A classic Snake game implementation for the browser using HTML5 Canvas and JavaScript",
-  "main": "index.html",
+  "description": "A classic Snake game built with HTML5 Canvas and JavaScript",
+  "type": "module",
   "scripts": {
-  "start": "vite",
-  "serve": "vite",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
